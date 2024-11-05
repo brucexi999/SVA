@@ -1,40 +1,18 @@
-//if signal a asserts, then signal c should assert within 1 to 5 clock cycles, 
-//followed by signal b becoming high. signal ce should remain high for entire duration of this sequence.
+// If a assert then a must remain true as long as en remains true.
 module tb;
-  reg a = 0, b = 0, c = 0,ce = 0;
+  reg a = 0, en = 0;
   reg clk = 0;
   
   always #5 clk = ~clk;
-  
-  //always #2 en = ~en;
+
   
   initial begin
-    #20;
-    a = 1; 
-    #10;
+    en = 1;
+    a = 1;
+    #30;
     a = 0;
-   end
-  
-  initial begin
-    #49;
-    b = 1;
-    #10;
-    b = 0;
-  end
-  
-    initial begin 
-    #40;
-    c = 1;
-    #10;
-    c = 0;
-  end
-  
-  initial begin
-    #15;
-    ce = 1;
-    #60;
-    ce = 0;
-    
+    en = 0;
+    #20;
   end
   
   initial begin
@@ -44,12 +22,11 @@ module tb;
     #100;
     $finish();
   end
- 
-  property p_a_to_c_then_b;
-    @(posedge clk)
-    a |-> (ce throughout (##[1:5] c ##1 b));
-  endproperty
 
-  assert property (p_a_to_c_then_b)
-    else $fatal("Assertion failed @ %0t", $time);
- endmodule
+  sequence seq_en;
+    en[*1:$];
+  endsequence
+
+  /// Add your code here
+  assert property (@(posedge clk) $rose(a) |-> (a throughout seq_en)) else $error("Assertion failed at %0t", $time);
+endmodule
